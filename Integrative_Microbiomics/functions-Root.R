@@ -6,9 +6,9 @@ use_python("/usr/local/bin/python")
 source_python("Python_codes/plot_mat.py")
 source_python("Python_codes/sil.py")
 #=================Trail data====================
-#data1<-read.csv("./../Data/bacteria.csv",header = TRUE,row.names = 1)
-#data2<-read.csv("./../Data/fungi.csv",header = TRUE,row.names = 1)
-#data3<-read.csv("./../Data/virus.csv",header = TRUE,row.names = 1)
+data1<-read.csv("./../Data/bacteria.csv",header = TRUE,row.names = 1)
+data2<-read.csv("./../Data/fungi.csv",header = TRUE,row.names = 1)
+data3<-read.csv("./../Data/virus.csv",header = TRUE,row.names = 1)
 #=====Function for plotting individual biomes===================
 biome_plot<-function(data,k){
   dsim=vegdist(data,method='bray',diag=TRUE,upper=TRUE)
@@ -43,7 +43,7 @@ merge_snf<-function(x,k,t){
     incProgress(1/3, detail = paste("Merging", i))
     if (is.null(x[[i]])==FALSE){
       dsim=vegdist(x[[i]],method='bray',diag=TRUE,upper=TRUE)
-      dsim[is.nan(dsim)]<-0 
+      dsim[is.nan(dsim)]<-0  #Dissimilarity is 0 if both patients have no microbes
       x[[i]]=(as.matrix(dsim)-1)*-1
       }
   }
@@ -128,7 +128,6 @@ merge_wsnf<-function(x,k,t,weight){
     incProgress(1/3, detail = paste("Merging", i))
     if (is.null(x[[i]])==FALSE){
       dsim=vegdist(x[[i]],method='bray',diag=TRUE,upper=TRUE)
-      dsim[is.nan(dsim)]<-0  #Dissimilarity is 0 if both patients have no microbes
       x[[i]]=(as.matrix(dsim)-1)*-1
     }
   }

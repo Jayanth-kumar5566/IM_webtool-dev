@@ -51,7 +51,7 @@ ui <- fluidPage(theme = shinytheme("yeti"),
                         hr(),
                         actionButton(inputId = "merge",label = "Merge")),
                  column(6,
-                        selectInput("method","Merging Method :",c("SNF")),
+                        selectInput("method","Merging Method :",c("SNF","Weighted SNF")),
                         textOutput("method_out"),
                         hr(),
                         h4("Tuneable Parameters"),
@@ -169,15 +169,27 @@ if(is.null(input$method))
   switch(input$method,
        "SNF"=tagList(
         numericInput("K_nn","K Neareast Neighbours",value = round(dim(data1())[1]/10)),
-        numericInput("t_iter","Number of Iterations",value=20))
-       )
+        numericInput("t_iter","Number of Iterations",value=20)),
+      "Weighted SNF"=tagList(
+        numericInput("K_nn","K Neareast Neighbours",value = round(dim(data1())[1]/10)),
+        numericInput("t_iter","Number of Iterations",value=20),
+        numericInput("weight1","Weight of the Biome 1",value=length(data1())),
+        numericInput("weight2","Weight of the Biome 2",value=length(data2())),
+        numericInput("weight3","Weight of the Biome 3",value=length(data3()))
+        )
+      )
   })
 
 data_merge=eventReactive(input$merge,
                         {
+                          if(input$method=="SNF"){
                           withProgress(message = "Merging Biomes",value = 0,
                                       {merge_snf(list(data1(),data2(),data3()),input$K_nn,input$t_iter)}
-                          )
+                          )}
+                          else if(input$method=="Weighted SNF"){
+                            withProgress(message = "Merging Biomes",value = 0,
+                            {merge_wsnf(list(data1(),data2(),data3()),input$K_nn,input$t_iter,c(input$weight1,input$weight2,input$weight3))}
+                            )}
                           })
 
 output$k_Table<-renderTable(
@@ -231,6 +243,5 @@ output$auth <- renderUI({tagList(url)})
 }
 shinyApp(ui = ui, server = server)
 #Todo
-#Find out how to set the empty data3() to NULL
-#Then change the merge_snf code appropriately
-#Try rendering the table of silhouette and the plot 
+#Check if the dimensions are the same
+#Check if the ordering of the index is same if not reindex
