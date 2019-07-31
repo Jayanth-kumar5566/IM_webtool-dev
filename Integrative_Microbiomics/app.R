@@ -98,7 +98,9 @@ ui <- fluidPage(theme = shinytheme("yeti"),
                       fluidRow(
                         hr(),
                         column(6,
-                               plotOutput(outputId = "merged_biome_plot")
+                               plotOutput(outputId = "merged_biome_plot"),
+                               actionButton(inputId = "sim_plot","Similarity Plot"),
+                               actionButton(inputId = "log_plot","Log Similarity Plot")
                                ),
                         column(6,
                                numericInput("merged_biome", label = h4("Optimal Number of Clusters"),value=2,min = 2),
@@ -161,7 +163,13 @@ output$method_out<-renderText({
     noise in different data types. Integrating data in a non-linear fashion 
     allows SNF to take advantage of the common as well as complementary i
     nformation in different data types "}
-  })
+  else if(input$method=="Weighted SNF"){"Weighted SNF, is a modified version of SNF
+    that accepts weightage for each biome, this is necessary as each biome may not be
+    sequenced to same depth or may not be of equal quality. This method addresses this 
+    issue by weigthing them iteratively at each step of SNF. However, this method can
+    only be applied if the number of biomes is 3 or more. In the case of 2 biomes,
+    Weighted SNF = SNF"}
+    })
 
 output$ui<-renderUI({
 if(is.null(input$method))
@@ -206,9 +214,17 @@ output$cluster_est1<-renderTable({est_tab()[,1:2]
 output$cluster_est2<-renderTable({est_tab()[,3:4]
 })
 
-output$merged_biome_plot<-renderPlot({
+observeEvent(input$sim_plot,{
+  output$merged_biome_plot<-renderPlot({
   withProgress(message="Plotting the Biomes",biome_plot(data_merge(),input$merged_biome))
   })
+  })
+
+observeEvent(input$log_plot,{
+  output$merged_biome_plot<-renderPlot({
+    withProgress(message="Plotting the Biomes",biome_log_plot(data_merge(),input$merged_biome))
+  })
+})
 
 label=reactive({label_create(data_merge(),input$merged_biome)})
 

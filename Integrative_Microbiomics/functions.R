@@ -23,6 +23,21 @@ biome_plot<-function(data,k){
                  main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = ""))
 }
 
+#=====Function for plotting log of individual biomes===================
+biome_log_plot<-function(data,k){
+  dsim=vegdist(data,method='bray',diag=TRUE,upper=TRUE)
+  sim=(as.matrix(dsim)-1)*-1
+  sim[is.nan(sim)]=1
+  labels=spectralClustering(sim,k)
+  labels=as.data.frame(labels,row.names = row.names(data))
+  sim=as.data.frame(sim)
+  #bplot(sim,labels)
+  sim<-log(sim)
+  m<-bplot(sim,labels)
+  return(heatmap(as.matrix(m),diss,Rowv = NA, Colv = NA, scale = "none",
+                 main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = ""))
+}
+
 #===========Function for giving k based on maximum silhoutee score============
 #Given Similarity matrix and labels
 max_k<-function(sim){
