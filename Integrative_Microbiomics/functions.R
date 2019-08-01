@@ -6,9 +6,9 @@ use_python("/usr/local/bin/python")
 source_python("Python_codes/plot_mat.py")
 source_python("Python_codes/sil.py")
 #=================Trail data====================
-#data1<-read.csv("./../Data/bacteria.csv",header = TRUE,row.names = 1)
-#data2<-read.csv("./../Data/fungi.csv",header = TRUE,row.names = 1)
-#data3<-read.csv("./../Data/virus.csv",header = TRUE,row.names = 1)
+data1<-read.csv("./../Data/bacteria.csv",header = TRUE,row.names = 1)
+data2<-read.csv("./../Data/fungi.csv",header = TRUE,row.names = 1)
+data3<-read.csv("./../Data/virus.csv",header = TRUE,row.names = 1)
 #=====Function for plotting individual biomes===================
 biome_plot<-function(data,k){
   dsim=vegdist(data,method='bray',diag=TRUE,upper=TRUE)

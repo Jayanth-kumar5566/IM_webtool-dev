@@ -190,6 +190,8 @@ if(is.null(input$method))
 
 data_merge=eventReactive(input$merge,
                         {
+                          validate(need(dim(data1())[1]==dim(data2())[1] & dim(data2())[1]==dim(data3())[1],"No. of patients/samples is not consistent between the biomes. Please Check and rerun!"))
+                          validate(need(all(row.names(data1())==row.names(data2()) & row.names(data2()) == row.names(data3())),"The patients/samples are not ordered consistently between the biomes. Please Check and rerun!"))
                           if(input$method=="SNF"){
                           withProgress(message = "Merging Biomes",value = 0,
                                       {merge_snf(list(data1(),data2(),data3()),input$K_nn,input$t_iter)}
