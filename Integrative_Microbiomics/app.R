@@ -6,6 +6,56 @@ source("functions.R")
 ui <- fluidPage(theme = shinytheme("yeti"),
   headerPanel("Integrative Microbiomics",windowTitle="Microbiomics"),
   navbarPage("Integrative Microbiomics",id = "inTabset",
+             tabPanel("Introduction",value = "welcome_page",
+                      fluidRow(
+                        h1("Integrative Microbiomics",align="center"),
+                        p("Integrative microbiomics is a tool, that allows you
+                          to merge microbiome datasets on same set of samples/patients.
+                          It implements spectral clustering on the merged microbiomes
+                          to cluster them."),
+                        h3("How to use the tool?"),
+                        tags$ol(
+                          tags$li("Convert your OTU table of all the biomes into a csv file, having the following structure"),
+                          tags$img(src = "bac.png", width = "600px", height = "400px"),
+                          tags$li("Realign the PatientID/Sample IDs so that the indices are the same between the different biomes"),
+                          tags$img(src = "bac.png", width = "600px", height = "400px"),tags$img(src = "fun.png", width = "600px", height = "400px"),
+                          tags$li("Click on the 'Biome submission' tab and upload your biomes. A plot representing
+                                  the abundance of microbes in that biome would appear. You can change the number of species
+                                  it represents by increasing the value of 'Number of Species'"),
+                          tags$li("Clicking on the 'Next' button would take you to the 'parameter
+                                  selection' tab which allows you to modify the default parameters of 
+                                  different merging algorithms and the similarity measure used. As of now, only
+                                  Bray-Curtis similarity measure and two merging methods are implemented."),
+                          tags$br(),
+                          tags$b("Similarity Network Fusion"),
+                          tags$ol(
+                            tags$li(tags$b("K Neareast Neighbours"),": The number of patients/samples used
+                                    to calculate local affinity. The default is set to n/10, where 'n' is the total
+                                    number of patients. See",tags$a(href="https://www.nature.com.remotexs.ntu.edu.sg/articles/nmeth.2810", "SNF paper"),"for more clarification"),
+                          tags$li(tags$b("Number of iterations"),": Number of iterations used to
+                                          iteratively update the similarity matrix. See",tags$a(href="https://www.nature.com.remotexs.ntu.edu.sg/articles/nmeth.2810", "SNF paper"),"for more clarification")
+                          ),
+                          tags$br(),
+                          tags$b("Weighted Similarity Network Fusion"),
+                          tags$ol(
+                            tags$li(tags$b("K Neareast Neighbours & Number of iterations"), "same as in SNF"),
+                            tags$li(tags$b("Weight of the Biome"),"It assigns weight to each of the biomes. 
+                                    The default is set to number of the microbes present in that biome.")
+                          ),
+                        tags$li("Clicking the 'Merge' button would take you to the 'Cluster Visuvalization' tab.
+                                This page offers various metrics/values to help you decide the optimal number 
+                                of clusters. However, do not rely on only one value or method as there is no 
+                                single function that can provide you with true value of number of clusters.
+                                The value of number of clusters should be set in the",tags$b("Optimal Number of Clusters")),
+                        tags$li("Clicking", tags$b("Similarity Plot"), "would plot the fused/merged similarity matrix
+                                of patients with both the axises representing the reordered patients or samples based on
+                                their cluster membership. Clicking",tags$b("Log Similarity Plot"), "would plot the logged
+                                version of the same the similarity matrix as above."),
+                        tags$li(tags$b("Download Label files"),"enables the user to download the labels/cluster
+                                membership of patients/samples. This action would return as below"),
+                        tags$img(src = "lab.png", width = "300px", height = "400px")
+                        )
+                      )),
              tabPanel("Biome Submission",value = "panel1",fluidRow(
                column(4,fileInput(inputId = "biome1",label = "Biome: 1"),
                       h4(textOutput(outputId = "biome1_text")),
@@ -190,8 +240,8 @@ if(is.null(input$method))
 
 data_merge=eventReactive(input$merge,
                         {
-                          validate(need(dim(data1())[1]==dim(data2())[1] & dim(data2())[1]==dim(data3())[1],"No. of patients/samples is not consistent between the biomes. Please Check and rerun!"))
-                          validate(need(all(row.names(data1())==row.names(data2()) & row.names(data2()) == row.names(data3())),"The patients/samples are not ordered consistently between the biomes. Please Check and rerun!"))
+                          validate(chec_cons(data1(),data2(),data3()))
+                          validate(chec_order(data1(),data2(),data3()))
                           if(input$method=="SNF"){
                           withProgress(message = "Merging Biomes",value = 0,
                                       {merge_snf(list(data1(),data2(),data3()),input$K_nn,input$t_iter)}

@@ -165,3 +165,25 @@ bar<-function(data,k){
   par(mar=c(1,10,1,1)+.1)
   barplot(sort(summ[1:k]),las=2,axes=FALSE, col="darkblue",horiz = TRUE)
 }
+
+#=============Function for checking consistency of patients==============
+chec_cons<-function(data1,data2,data3){
+y<-list(data1,data2,data3)
+x<-lapply(y,is.null)
+y<-y[!unlist(x)] #Not null datasets
+diim<-function(x){return(dim(x)[1])}
+z<-lapply(y, diim)
+if(length(unique(unlist(z)))==1){
+  return(NULL)}
+  else{return("No. of patients/samples is not consistent between the biomes. Please Check and rerun!")}
+}
+#=============Function for ordering of patients==============
+chec_order<-function(data1,data2,data3){
+  y<-list(data1,data2,data3)
+  x<-lapply(y,is.null)
+  y<-y[!unlist(x)] #Not null datasets
+  z<-lapply(y, row.names)
+  if(length(unique(unlist(z)))==length(z[[1]])){
+    return(NULL)}
+  else{return("The patients/samples are not ordered consistently between the biomes. Please Check and rerun!")}
+}
