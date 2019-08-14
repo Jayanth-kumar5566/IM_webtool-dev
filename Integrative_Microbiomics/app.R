@@ -53,7 +53,7 @@ ui <- fluidPage(theme = shinytheme("yeti"),
                                 version of the same the similarity matrix as above."),
                         tags$li(tags$b("Download Label files"),"enables the user to download the labels/cluster
                                 membership of patients/samples. This action would return as below"),
-                        tags$img(src = "lab.png", width = "300px", height = "400px")
+                        tags$img(src = "lab.png", width = "200px", height = "300px")
                         )
                       )),
              tabPanel("Biome Submission",value = "panel1",fluidRow(
