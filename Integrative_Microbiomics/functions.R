@@ -52,10 +52,12 @@ max_k<-function(sim){
     return(k_sil)
   }
 #=================Merging Function==================================
-merge_snf<-function(x,k,t){
-  #x<-list(data1,data2,data3)
-  for (i in 1:3){
-    incProgress(1/3, detail = paste("Merging", i))
+merge_snf<-function(data1,data2,data3,x,k,t){
+  x[[length(x)+1]]<-data1
+  x[[length(x)+2]]<-data2
+  x[[length(x)+3]]<-data3
+  for (i in 1:length(x)){
+    incProgress(1/length(x), detail = paste("Merging", i))
     if (is.null(x[[i]])==FALSE){
       dsim=vegdist(x[[i]],method='bray',diag=TRUE,upper=TRUE)
       dsim[is.nan(dsim)]<-0 
@@ -167,8 +169,10 @@ bar<-function(data,k){
 }
 
 #=============Function for checking consistency of patients==============
-chec_cons<-function(data1,data2,data3){
-y<-list(data1,data2,data3)
+chec_cons<-function(data1,data2,data3,y){
+y[[length(y)+1]]<-data1
+y[[length(y)+2]]<-data2
+y[[length(y)+3]]<-data3
 x<-lapply(y,is.null)
 y<-y[!unlist(x)] #Not null datasets
 diim<-function(x){return(dim(x)[1])}
@@ -178,12 +182,25 @@ if(length(unique(unlist(z)))==1){
   else{return("No. of patients/samples is not consistent between the biomes. Please Check and rerun!")}
 }
 #=============Function for ordering of patients==============
-chec_order<-function(data1,data2,data3){
-  y<-list(data1,data2,data3)
+chec_order<-function(data1,data2,data3,y){
+  y[[length(y)+1]]<-data1
+  y[[length(y)+2]]<-data2
+  y[[length(y)+3]]<-data3
   x<-lapply(y,is.null)
   y<-y[!unlist(x)] #Not null datasets
   z<-lapply(y, row.names)
   if(length(unique(unlist(z)))==length(z[[1]])){
     return(NULL)}
   else{return("The patients/samples are not ordered consistently between the biomes. Please Check and rerun!")}
+}
+
+#==================Multiple weight UI =====================
+weight_ui<-function(data1,data2,data3,data_extra){
+  lst=tagList(numericInput("K_nn","K Neareast Neighbours",value = round(dim(data1[1])/10)),
+                           numericInput("t_iter","Number of Iterations",value=20))
+  for (i in 1:(length(data_extra)+3)){
+    #print(length(data_extra))
+    lst<-tagAppendChild(lst,numericInput(paste("weight",i),paste("Weight of the Biome", i),value=0))
+  }
+  return(lst)
 }

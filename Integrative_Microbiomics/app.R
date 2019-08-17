@@ -58,23 +58,29 @@ ui <- fluidPage(theme = shinytheme("yeti"),
                       )),
              tabPanel("Biome Submission",value = "panel1",fluidRow(
                column(4,fileInput(inputId = "biome1",label = "Biome: 1"),
+                      actionButton(inputId = "go_biome1",label = "Upload Biome: 1"),
                       h4(textOutput(outputId = "biome1_text")),
                       plotOutput(outputId = "biome1_plot"),
-                      numericInput("k_biome1", label = h4("Number of species"), value = 10,min=1),
-                      actionButton(inputId = "go_biome1",label = "Upload Biome: 1")),
+                      numericInput("k_biome1", label = h4("Number of species"), value = 10,min=1)
+                      ),
                column(4,fileInput(inputId = "biome2",label = "Biome: 2"),
+                      actionButton(inputId = "go_biome2",label = "Upload Biome: 2"),
                       h4(textOutput(outputId = "biome2_text")),
                       plotOutput(outputId = "biome2_plot"),
-                      numericInput("k_biome2", label = h4("Number of species"), value = 10,min=1),
-                      actionButton(inputId = "go_biome2",label = "Upload Biome: 2")),
+                      numericInput("k_biome2", label = h4("Number of species"), value = 10,min=1)
+                      ),
                column(4,fileInput(inputId = "biome3",label = "Biome: 3"),
+                      actionButton(inputId = "go_biome3",label = "Upload Biome: 3"),
                       h4(textOutput(outputId = "biome3_text")),
                       plotOutput(outputId = "biome3_plot"),
-                      numericInput("k_biome3", label = h4("Number of species"), value = 10,min=1),
-                      actionButton(inputId = "go_biome3",label = "Upload Biome: 3"))),
+                      numericInput("k_biome3", label = h4("Number of species"), value = 10,min=1)
+                      )),
                fluidRow(
-                 column(2,
+                 column(4,
                         br(),br(),
+                        fileInput(inputId = "biomes_extra",label = "Additional Biomes",multiple = TRUE)
+                        ),
+                 column(2,
                         h5("Click on Next to proceed"),
                         actionButton('jumptot2', 'Next'),offset = 9)
                )
@@ -169,8 +175,7 @@ ui <- fluidPage(theme = shinytheme("yeti"),
                                ))
              ))
 server <- function(input, output, session) {
-  in_parm<-reactiveValues(tmp_go_biome3=NULL,tmp_go_biome2=NULL,tmp_go_biome1=NULL)
-  print(isolate(in_parm$tmp_go_biome1))
+  in_parm<-reactiveValues(tmp_go_biome3=NULL,tmp_go_biome2=NULL,tmp_go_biome1=NULL,tmp_go_biomes_extra=NULL)
   data1=eventReactive(in_parm$tmp_go_biome1,{
     if (is.null(input$biome1$datapath))
     {return(NULL)}
@@ -198,6 +203,17 @@ server <- function(input, output, session) {
   })
   output$biome3_plot<-renderPlot({bar(data3(),input$k_biome3)})
   output$biome3_text<-renderText({paste("Top",input$k_biome3,"species based on their abundance")})
+  data_extra=eventReactive(in_parm$tmp_go_biome1,{
+    if (length(input$biomes_extra[,1])==0)
+    {return(NULL)}
+    else{
+      lst=list()
+      for(i in 1:length(input$biomes_extra[,1])){
+        lst[[i]] <- read.csv(input$biomes_extra[[i, 'datapath']],header = TRUE,row.names = 1)
+      } 
+      return(lst)
+    }
+  })
   
 output$metric_out<-renderText({
   if(input$metric=="Bray-Curtis"){"Bray-Cutis Similarity
@@ -228,23 +244,18 @@ if(is.null(input$method))
        "SNF"=tagList(
         numericInput("K_nn","K Neareast Neighbours",value = round(dim(data1())[1]/10)),
         numericInput("t_iter","Number of Iterations",value=20)),
-      "Weighted SNF"=tagList(
-        numericInput("K_nn","K Neareast Neighbours",value = round(dim(data1())[1]/10)),
-        numericInput("t_iter","Number of Iterations",value=20),
-        numericInput("weight1","Weight of the Biome 1",value=length(data1())),
-        numericInput("weight2","Weight of the Biome 2",value=length(data2())),
-        numericInput("weight3","Weight of the Biome 3",value=length(data3()))
-        )
+      "Weighted SNF"= weight_ui(data1(),data2(),data3(),data_extra())
+        
       )
   })
 
 data_merge=eventReactive(input$merge,
                         {
-                          validate(chec_cons(data1(),data2(),data3()))
-                          validate(chec_order(data1(),data2(),data3()))
+                          validate(chec_cons(data1(),data2(),data3(),data_extra()))
+                          validate(chec_order(data1(),data2(),data3(),data_extra()))
                           if(input$method=="SNF"){
                           withProgress(message = "Merging Biomes",value = 0,
-                                      {merge_snf(list(data1(),data2(),data3()),input$K_nn,input$t_iter)}
+                                      {merge_snf(data1(),data2(),data3(),data_extra(),input$K_nn,input$t_iter)}
                           )}
                           else if(input$method=="Weighted SNF"){
                             withProgress(message = "Merging Biomes",value = 0,
@@ -295,6 +306,7 @@ observeEvent(input$jumptot2, {
   in_parm$tmp_go_biome3<- abs(round(rnorm(1)*10))
   in_parm$tmp_go_biome2<- abs(round(rnorm(1)*10))
   in_parm$tmp_go_biome1<- abs(round(rnorm(1)*10))
+  in_parm$tmp_go_biomes_extra<-abs(round(rnorm(1)*10))
   updateTabsetPanel(session, "inTabset",selected = "panel2")
 })
 
