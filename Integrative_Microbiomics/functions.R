@@ -9,6 +9,7 @@ source_python("Python_codes/sil.py")
 data1<-read.csv("./../Data/bacteria.csv",header = TRUE,row.names = 1)
 data2<-read.csv("./../Data/fungi.csv",header = TRUE,row.names = 1)
 data3<-read.csv("./../Data/virus.csv",header = TRUE,row.names = 1)
+data_extra<-list(data1,data2)
 #=====Function for plotting individual biomes===================
 biome_plot<-function(data,k){
   dsim=vegdist(data,method='bray',diag=TRUE,upper=TRUE)
@@ -54,8 +55,8 @@ max_k<-function(sim){
 #=================Merging Function==================================
 merge_snf<-function(data1,data2,data3,x,k,t){
   x[[length(x)+1]]<-data1
-  x[[length(x)+2]]<-data2
-  x[[length(x)+3]]<-data3
+  x[[length(x)+1]]<-data2
+  x[[length(x)+1]]<-data3
   for (i in 1:length(x)){
     incProgress(1/length(x), detail = paste("Merging", i))
     if (is.null(x[[i]])==FALSE){
@@ -138,21 +139,25 @@ SNF_weighted_iter<-function (Wall, K = 20, t = 20, weight)
   return(W)
 }
 
-merge_wsnf<-function(x,k,t,weight){
-  #x<-list(data1,data2,data3)
-  #weight<-c(weight1,weight2,weight3)
-  for (i in 1:3){
-    incProgress(1/3, detail = paste("Merging", i))
-    if (is.null(x[[i]])==FALSE){
-      dsim=vegdist(x[[i]],method='bray',diag=TRUE,upper=TRUE)
+merge_wsnf<-function(data1,data2,data3,data_extra,k,t,weight){
+  data_extra<-rev(data_extra)
+  data_extra[[length(data_extra)+1]]<-data3
+  data_extra[[length(data_extra)+1]]<-data2
+  data_extra[[length(data_extra)+1]]<-data1
+  data_extra<-rev(data_extra)
+  print(weight)
+  for (i in 1:length(data_extra)){
+    incProgress(1/length(data_extra), detail = paste("Merging", i))
+    if (is.null(data_extra[[i]])==FALSE){
+      dsim=vegdist(data_extra[[i]],method='bray',diag=TRUE,upper=TRUE)
       dsim[is.nan(dsim)]<-0  #Dissimilarity is 0 if both patients have no microbes
-      x[[i]]=(as.matrix(dsim)-1)*-1
+      data_extra[[i]]=(as.matrix(dsim)-1)*-1
     }
   }
-  if (sum(sapply(x,is.null))>0){
-    x<-x[-which(sapply(x, is.null))]
+  if (sum(sapply(data_extra,is.null))>0){
+    data_extra<-data_extra[-which(sapply(data_extra, is.null))]
   } 
-  W = SNF_weighted_iter(x,k,t,weight)
+  W = SNF_weighted_iter(data_extra,k,t,weight)
   return(W)
 }
 #=============Label Creating Function=======================
@@ -171,8 +176,8 @@ bar<-function(data,k){
 #=============Function for checking consistency of patients==============
 chec_cons<-function(data1,data2,data3,y){
 y[[length(y)+1]]<-data1
-y[[length(y)+2]]<-data2
-y[[length(y)+3]]<-data3
+y[[length(y)+1]]<-data2
+y[[length(y)+1]]<-data3
 x<-lapply(y,is.null)
 y<-y[!unlist(x)] #Not null datasets
 diim<-function(x){return(dim(x)[1])}
@@ -184,8 +189,8 @@ if(length(unique(unlist(z)))==1){
 #=============Function for ordering of patients==============
 chec_order<-function(data1,data2,data3,y){
   y[[length(y)+1]]<-data1
-  y[[length(y)+2]]<-data2
-  y[[length(y)+3]]<-data3
+  y[[length(y)+1]]<-data2
+  y[[length(y)+1]]<-data3
   x<-lapply(y,is.null)
   y<-y[!unlist(x)] #Not null datasets
   z<-lapply(y, row.names)
@@ -198,9 +203,16 @@ chec_order<-function(data1,data2,data3,y){
 weight_ui<-function(data1,data2,data3,data_extra){
   lst=tagList(numericInput("K_nn","K Neareast Neighbours",value = round(dim(data1[1])/10)),
                            numericInput("t_iter","Number of Iterations",value=20))
-  for (i in 1:(length(data_extra)+3)){
+  data_extra<-rev(data_extra)
+  data_extra[[length(data_extra)+1]]<-data3
+  data_extra[[length(data_extra)+1]]<-data2
+  data_extra[[length(data_extra)+1]]<-data1
+  data_extra<-rev(data_extra)
+  tot=sum(unlist(lapply(data_extra,length)))
+  for (i in 1:length(data_extra)){
     #print(length(data_extra))
-    lst<-tagAppendChild(lst,numericInput(paste("weight",i),paste("Weight of the Biome", i),value=0))
+    lst<-tagAppendChild(lst,numericInput(paste0("weight",i),paste("Weight of the Biome", i),value=((length(data_extra[[i]])/tot)*100),step = 0.1
+                                         ))
   }
   return(lst)
 }

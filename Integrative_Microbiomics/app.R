@@ -259,7 +259,8 @@ data_merge=eventReactive(input$merge,
                           )}
                           else if(input$method=="Weighted SNF"){
                             withProgress(message = "Merging Biomes",value = 0,
-                            {merge_wsnf(list(data1(),data2(),data3()),input$K_nn,input$t_iter,c(input$weight1,input$weight2,input$weight3))}
+                                         {merge_wsnf(data1(),data2(),data3(),data_extra(),input$K_nn,input$t_iter,unlist(lapply(1:(length(data_extra())+3),function(i) {input[[paste0("weight",i)]]}))
+                                        )}
                             )}
                           })
 
