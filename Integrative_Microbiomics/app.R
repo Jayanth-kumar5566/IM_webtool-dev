@@ -100,7 +100,7 @@ ui <- fluidPage(theme = shinytheme("yeti"),
                fluidRow(
                  hr(),
                  column(6,
-                        selectInput("metric","Metric/Similarity Measure :",c("Bray-Curtis")),
+                        selectInput("metric","Metric/Similarity Measure :",c("bray","gower","canberra", "jaccard")), #Can only have disimilarity measures with max value 1 and min value 0 not others
                         textOutput("metric_out"),
                         br(),
                         br(),
@@ -129,6 +129,17 @@ ui <- fluidPage(theme = shinytheme("yeti"),
                       ),
                       fluidRow(
                         column(6,
+                               plotOutput(outputId = "merged_biome_plot"),
+                               actionButton(inputId = "sim_plot","Similarity Plot"),
+                               actionButton(inputId = "log_plot","Log Similarity Plot")
+                        ),
+                        column(6,
+                               uiOutput('opt_ui'),
+                               downloadButton(outputId = "download",label="Downlod Label Files"))
+                      ),
+                      fluidRow(
+                        hr(),
+                        column(6,
                                h4("Modified Average Silhouette Width"),
                                p("The below table represents the average silhouette width for
                                  different number of clusters.The silhouette value is a measure
@@ -150,17 +161,6 @@ ui <- fluidPage(theme = shinytheme("yeti"),
                         column(6,tableOutput("k_Table")),
                         column(6,tableOutput("cluster_est1"),
                         column(6,tableOutput("cluster_est2")))
-                      ),
-                      fluidRow(
-                        hr(),
-                        column(6,
-                               plotOutput(outputId = "merged_biome_plot"),
-                               actionButton(inputId = "sim_plot","Similarity Plot"),
-                               actionButton(inputId = "log_plot","Log Similarity Plot")
-                               ),
-                        column(6,
-                               numericInput("merged_biome", label = h4("Optimal Number of Clusters"),value=2,min = 2),
-                               downloadButton(outputId = "download",label="Downlod Label Files"))
                       )
                       ),
              tabPanel("About",value = "panel4",
@@ -216,9 +216,13 @@ server <- function(input, output, session) {
   })
   
 output$metric_out<-renderText({
-  if(input$metric=="Bray-Curtis"){"Bray-Cutis Similarity
+  if(input$metric=="bray"){"Bray-Cutis Similarity('bray')
   is a statistic used to quantify the compositional dissimilarity
-  between two different sites"}})  
+  between two different sites"}
+  else if(input$metric=="jaccard"){"Jaccard Similarity coefficient('jaccard') also known as Ruzicka similarity, is defined for two vectors x and y as https://en.wikipedia.org/wiki/Jaccard_index"}
+  else if(input$metric=="gower"){"Gower similarity"}
+  else if(input$metric=="canberra"){"Canberra similarity"}
+  })  
 output$method_out<-renderText({
   if(input$method=="SNF"){"Similarity Network Fusion, 
     is a new computational method for data integration. 
@@ -255,18 +259,19 @@ data_merge=eventReactive(input$merge,
                           validate(chec_order(data1(),data2(),data3(),data_extra()))
                           if(input$method=="SNF"){
                           withProgress(message = "Merging Biomes",value = 0,
-                                      {merge_snf(data1(),data2(),data3(),data_extra(),input$K_nn,input$t_iter)}
+                                      {merge_snf(data1(),data2(),data3(),data_extra(),input$K_nn,input$t_iter,input$metric)}
                           )}
                           else if(input$method=="Weighted SNF"){
                             withProgress(message = "Merging Biomes",value = 0,
-                                         {merge_wsnf(data1(),data2(),data3(),data_extra(),input$K_nn,input$t_iter,unlist(lapply(1:(length(data_extra())+3),function(i) {input[[paste0("weight",i)]]}))
+                                         {merge_wsnf(data1(),data2(),data3(),data_extra(),input$K_nn,input$t_iter,unlist(lapply(1:(length(data_extra())+3),function(i) {input[[paste0("weight",i)]]})),input$metric
                                         )}
                             )}
                           })
 
-output$k_Table<-renderTable(
-  withProgress(message="Calculating Silhouette",value=0,max_k(data_merge()))
-  )
+sil_vals<-reactive(withProgress(message="Calculating Silhouette",value=0,max_k(data_merge()))
+                   )
+
+output$k_Table<-renderTable(sil_vals())
 
 est_tab=reactive(withProgress(message = "Calculating Optimal Clusters",
             as.data.frame(estimateNumberOfClustersGivenGraph(data_merge()),row.names = "Optimal Clusters")
@@ -278,15 +283,18 @@ output$cluster_est1<-renderTable({est_tab()[,1:2]
 output$cluster_est2<-renderTable({est_tab()[,3:4]
 })
 
+output$opt_ui<-renderUI({
+numericInput("merged_biome", label = h4("Optimal Number of Clusters"),value=opt_clust(est_tab(),sil_vals()),min = 2)})
+
 observeEvent(input$sim_plot,{
   output$merged_biome_plot<-renderPlot({
-  withProgress(message="Plotting the Biomes",biome_plot(data_merge(),input$merged_biome))
+  withProgress(message="Plotting the Biomes",biome_plot(data_merge(),input$merged_biome,input$metric))
   })
   })
 
 observeEvent(input$log_plot,{
   output$merged_biome_plot<-renderPlot({
-    withProgress(message="Plotting the Biomes",biome_log_plot(data_merge(),input$merged_biome))
+    withProgress(message="Plotting the Biomes",biome_log_plot(data_merge(),input$merged_biome,input$metric))
   })
 })
 

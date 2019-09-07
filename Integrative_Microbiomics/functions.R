@@ -1,7 +1,8 @@
 #Functions to source into the app
-library(SNFtool)
+library("SNFtool")
 library("vegan")
 library("reticulate")
+library("RColorBrewer")
 use_python("/usr/local/bin/python")
 source_python("Python_codes/plot_mat.py")
 source_python("Python_codes/sil.py")
@@ -11,8 +12,8 @@ data2<-read.csv("./../Data/fungi.csv",header = TRUE,row.names = 1)
 data3<-read.csv("./../Data/virus.csv",header = TRUE,row.names = 1)
 data_extra<-list(data1,data2)
 #=====Function for plotting individual biomes===================
-biome_plot<-function(data,k){
-  dsim=vegdist(data,method='bray',diag=TRUE,upper=TRUE)
+biome_plot<-function(data,k,metric){
+  dsim=vegdist(data,method=metric,diag=TRUE,upper=TRUE)
   sim=(as.matrix(dsim)-1)*-1
   sim[is.nan(sim)]=1
   labels=spectralClustering(sim,k)
@@ -20,13 +21,14 @@ biome_plot<-function(data,k){
   sim=as.data.frame(sim)
   #bplot(sim,labels)
   m<-bplot(sim,labels)
-  return(heatmap(as.matrix(m),diss,Rowv = NA, Colv = NA, scale = "none",
-                 main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = ""))
+  pal<-colorRampPalette(c('white','Blue'))(200)
+  return(heatmap(as.matrix(m),Rowv = NA, Colv = NA, scale = "none",
+                 main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = "",,col=pal))
 }
 
 #=====Function for plotting log of individual biomes===================
-biome_log_plot<-function(data,k){
-  dsim=vegdist(data,method='bray',diag=TRUE,upper=TRUE)
+biome_log_plot<-function(data,k,metric){
+  dsim=vegdist(data,method=metric,diag=TRUE,upper=TRUE)
   sim=(as.matrix(dsim)-1)*-1
   sim[is.nan(sim)]=1
   labels=spectralClustering(sim,k)
@@ -35,8 +37,9 @@ biome_log_plot<-function(data,k){
   #bplot(sim,labels)
   sim<-log(sim)
   m<-bplot(sim,labels)
-  return(heatmap(as.matrix(m),diss,Rowv = NA, Colv = NA, scale = "none",
-                 main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = ""))
+  pal<-colorRampPalette(c('white','Blue'))(200)
+  return(heatmap(as.matrix(m),Rowv = NA, Colv = NA, scale = "none",
+                 main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = "",col=pal))
 }
 
 #===========Function for giving k based on maximum silhoutee score============
@@ -53,14 +56,14 @@ max_k<-function(sim){
     return(k_sil)
   }
 #=================Merging Function==================================
-merge_snf<-function(data1,data2,data3,x,k,t){
+merge_snf<-function(data1,data2,data3,x,k,t,metric){
   x[[length(x)+1]]<-data1
   x[[length(x)+1]]<-data2
   x[[length(x)+1]]<-data3
   for (i in 1:length(x)){
     incProgress(1/length(x), detail = paste("Merging", i))
     if (is.null(x[[i]])==FALSE){
-      dsim=vegdist(x[[i]],method='bray',diag=TRUE,upper=TRUE)
+      dsim=vegdist(x[[i]],method=metric,diag=TRUE,upper=TRUE)
       dsim[is.nan(dsim)]<-0 
       x[[i]]=(as.matrix(dsim)-1)*-1
       }
@@ -139,7 +142,7 @@ SNF_weighted_iter<-function (Wall, K = 20, t = 20, weight)
   return(W)
 }
 
-merge_wsnf<-function(data1,data2,data3,data_extra,k,t,weight){
+merge_wsnf<-function(data1,data2,data3,data_extra,k,t,weight,metric){
   data_extra<-rev(data_extra)
   data_extra[[length(data_extra)+1]]<-data3
   data_extra[[length(data_extra)+1]]<-data2
@@ -149,7 +152,7 @@ merge_wsnf<-function(data1,data2,data3,data_extra,k,t,weight){
   for (i in 1:length(data_extra)){
     incProgress(1/length(data_extra), detail = paste("Merging", i))
     if (is.null(data_extra[[i]])==FALSE){
-      dsim=vegdist(data_extra[[i]],method='bray',diag=TRUE,upper=TRUE)
+      dsim=vegdist(data_extra[[i]],method=metric,diag=TRUE,upper=TRUE)
       dsim[is.nan(dsim)]<-0  #Dissimilarity is 0 if both patients have no microbes
       data_extra[[i]]=(as.matrix(dsim)-1)*-1
     }
@@ -216,3 +219,23 @@ weight_ui<-function(data1,data2,data3,data_extra){
   }
   return(lst)
 }
+#================Optimal Number of clusters choosing ===============================
+opt_clust<-function(est_tab,k_sil){
+  k_sil[["scores"]]<-0
+  try(k_sil[k_sil$`Silhouette Score`>0.3,]$scores<-1)
+  try(k_sil[k_sil$`Silhouette Score`>0.5,]$scores<-2)
+  try(k_sil[k_sil$`Silhouette Score`>0.7,]$scores<-3)
+  k_sil[est_tab$Eigen.gap.best - 1,]$scores <- k_sil[est_tab$Eigen.gap.best - 1,]$scores + 3
+  k_sil[est_tab$Eigen.gap.2nd.best - 1,]$scores <- k_sil[est_tab$Eigen.gap.2nd.best - 1,]$scores + 2
+  k_sil[est_tab$Rotation.cost.best - 1,]$scores <- k_sil[est_tab$Rotation.cost.best - 1,]$scores + 3
+  k_sil[est_tab$Rotation.cost.2nd.best - 1,]$scores <- k_sil[est_tab$Rotation.cost.2nd.best - 1,]$scores + 2
+  opt<-which(k_sil$scores==max(k_sil$scores))+1
+  return(opt)
+}
+
+#pal<-colorRampPalette(c('white','Blue'))(200)
+#heatmap(as.matrix(m),Rowv = NA, Colv = NA, scale = "none",
+#        main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = "",col=pal)
+
+#heatmap3(as.matrix(m),Rowv = NA, Colv = NA, scale = "none",
+#        main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",col=pal)
