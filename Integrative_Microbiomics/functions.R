@@ -23,7 +23,7 @@ biome_plot<-function(data,k,metric){
   m<-bplot(sim,labels)
   pal<-colorRampPalette(c('white','Blue'))(200)
   return(heatmap(as.matrix(m),Rowv = NA, Colv = NA, scale = "none",
-                 main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = "",,col=pal))
+                 main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = "",col=pal))
 }
 
 #=====Function for plotting log of individual biomes===================
