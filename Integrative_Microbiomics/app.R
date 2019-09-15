@@ -132,11 +132,18 @@ ui <- fluidPage(theme = shinytheme("yeti"),includeCSS("./www/style.css"),
                         column(6,
                                plotOutput(outputId = "merged_biome_plot"),
                                actionButton(inputId = "sim_plot","Similarity Plot"),
-                               actionButton(inputId = "log_plot","Log Similarity Plot")
+                               actionButton(inputId = "log_plot","Log Similarity Plot"),
+                               selectInput("color_scheme", label = "Color Scheme", 
+                                           choices = list("Blues" = 1, "Reds" = 2, "Greens" = 3), 
+                                           selected = 1)
                         ),
                         column(6,
                                uiOutput('opt_ui'),
-                               downloadButton(outputId = "download",label="Downlod Label Files"))
+                               downloadButton(outputId = "download",label="Downlod Label Files"),
+                               br(),
+                               hr(),
+                               downloadButton(outputId = "download_matrix",label="Downlod Fused Similarity matrix")
+                               )
                       ),
                       fluidRow(
                         hr(),
@@ -289,13 +296,13 @@ numericInput("merged_biome", label = h4("Optimal Number of Clusters"),value=opt_
 
 observeEvent(input$sim_plot,{
   output$merged_biome_plot<-renderPlot({
-  withProgress(message="Plotting the Biomes",biome_plot(data_merge(),input$merged_biome,input$metric))
+  withProgress(message="Plotting the Biomes",biome_plot(data_merge(),input$merged_biome,input$metric,input$color_scheme))
   })
   })
 
 observeEvent(input$log_plot,{
   output$merged_biome_plot<-renderPlot({
-    withProgress(message="Plotting the Biomes",biome_log_plot(data_merge(),input$merged_biome,input$metric))
+    withProgress(message="Plotting the Biomes",biome_log_plot(data_merge(),input$merged_biome,input$metric,input$color_scheme))
   })
 })
 
@@ -311,6 +318,17 @@ output$download<-downloadHandler(
    contentType = "csv"
  )
 
+mat_download=reactive({matrix_create(data_merge(),input$merged_biome)})
+
+output$download_matrix<-downloadHandler(
+  filename = function() {
+    paste('fused_matrix-', Sys.Date(), '.csv', sep='')
+  },
+  content = function(con) {
+    write.csv(mat_download(), con)
+  },
+  contentType = "csv"
+)
 #----Moving to different tabs-----
 observeEvent(input$jumptot2, {
   in_parm$tmp_go_biome3<- abs(round(rnorm(1)*10))

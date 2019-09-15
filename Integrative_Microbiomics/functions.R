@@ -7,12 +7,12 @@ use_python("/usr/local/bin/python")
 source_python("Python_codes/plot_mat.py")
 source_python("Python_codes/sil.py")
 #=================Trail data====================
-data1<-read.csv("./../Data/bacteria.csv",header = TRUE,row.names = 1)
-data2<-read.csv("./../Data/fungi.csv",header = TRUE,row.names = 1)
-data3<-read.csv("./../Data/virus.csv",header = TRUE,row.names = 1)
-data_extra<-list(data1,data2)
+#data1<-read.csv("./../Data/bacteria.csv",header = TRUE,row.names = 1)
+#data2<-read.csv("./../Data/fungi.csv",header = TRUE,row.names = 1)
+#data3<-read.csv("./../Data/virus.csv",header = TRUE,row.names = 1)
+#data_extra<-list(data1,data2)
 #=====Function for plotting individual biomes===================
-biome_plot<-function(data,k,metric){
+biome_plot<-function(data,k,metric,color_scheme){
   dsim=vegdist(data,method=metric,diag=TRUE,upper=TRUE)
   sim=(as.matrix(dsim)-1)*-1
   sim[is.nan(sim)]=1
@@ -21,13 +21,19 @@ biome_plot<-function(data,k,metric){
   sim=as.data.frame(sim)
   #bplot(sim,labels)
   m<-bplot(sim,labels)
-  pal<-colorRampPalette(c('white','Blue'))(200)
+  if (color_scheme==1){
+  pal<-colorRampPalette(c('white','Blue'))(200)}
+  else if(color_scheme==2){
+    pal<-colorRampPalette(c('white','Red'))(200)}
+  else if(color_scheme==3){
+    pal<-colorRampPalette(c('white','Green'))(200)
+  }
   return(heatmap(as.matrix(m),Rowv = NA, Colv = NA, scale = "none",
                  main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = "",col=pal))
 }
 
 #=====Function for plotting log of individual biomes===================
-biome_log_plot<-function(data,k,metric){
+biome_log_plot<-function(data,k,metric,color_scheme){
   dsim=vegdist(data,method=metric,diag=TRUE,upper=TRUE)
   sim=(as.matrix(dsim)-1)*-1
   sim[is.nan(sim)]=1
@@ -37,7 +43,13 @@ biome_log_plot<-function(data,k,metric){
   #bplot(sim,labels)
   sim<-log(sim)
   m<-bplot(sim,labels)
-  pal<-colorRampPalette(c('white','Blue'))(200)
+  if (color_scheme==1){
+    pal<-colorRampPalette(c('white','Blue'))(200)}
+  else if(color_scheme==2){
+    pal<-colorRampPalette(c('white','Red'))(200)}
+  else if(color_scheme==3){
+    pal<-colorRampPalette(c('white','Green'))(200)
+  }
   return(heatmap(as.matrix(m),Rowv = NA, Colv = NA, scale = "none",
                  main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = "",col=pal))
 }
@@ -167,6 +179,14 @@ merge_wsnf<-function(data1,data2,data3,data_extra,k,t,weight,metric){
 label_create<-function(sim,k){
   labels=spectralClustering(sim,k)
   labels=as.data.frame(labels,row.names = row.names(sim))
+}
+#=============Integrated Matrix Creating Function=======================
+matrix_create<-function(sim,k){
+  labels=spectralClustering(sim,k)
+  labels=as.data.frame(labels,row.names = row.names(sim))
+  sim=as.data.frame(sim)
+  m<-bplot(sim,labels)
+  return(m)
 }
 #============Function for barplot=====================
 bar<-function(data,k){
