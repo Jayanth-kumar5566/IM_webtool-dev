@@ -3,16 +3,17 @@ library(shinythemes)
 library(SNFtool)
 library("vegan")
 source("functions.R")
-ui <- fluidPage(theme = shinytheme("yeti"),
+ui <- fluidPage(theme = shinytheme("yeti"),includeCSS("./www/style.css"),
   headerPanel("Integrative Microbiomics",windowTitle="Microbiomics"),
   navbarPage("Integrative Microbiomics",id = "inTabset",
              tabPanel("Introduction",value = "welcome_page",
                       fluidRow(
-                        h1("Integrative Microbiomics",align="center"),
-                        p("Integrative microbiomics is a tool, that allows you
-                          to merge microbiome datasets on same set of samples/patients.
-                          It implements spectral clustering on the merged microbiomes
-                          to cluster them."),
+                        #h1("Integrative Microbiomics",align="center"),
+                        #p("Integrative microbiomics is a tool, that allows you
+                        #  to merge microbiome datasets on same set of samples/patients.
+                        #  It implements spectral clustering on the merged microbiomes
+                        #  to cluster them."),
+                        HTML('<center><img class="resize" src="img.png"></center>'),
                         h3("How to use the tool?"),
                         tags$ol(
                           tags$li("Convert your OTU table of all the biomes into a csv file, having the following structure"),
