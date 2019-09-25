@@ -12,7 +12,7 @@ source_python("Python_codes/sil.py")
 #data3<-read.csv("./../Data/virus.csv",header = TRUE,row.names = 1)
 #data_extra<-list(data1,data2)
 #=====Function for plotting individual biomes===================
-biome_plot<-function(data,k,metric,color_scheme){
+biome_plot<-function(data,k,metric,color_scheme_low,color_scheme_high){
   dsim=vegdist(data,method=metric,diag=TRUE,upper=TRUE)
   sim=(as.matrix(dsim)-1)*-1
   sim[is.nan(sim)]=1
@@ -21,19 +21,13 @@ biome_plot<-function(data,k,metric,color_scheme){
   sim=as.data.frame(sim)
   #bplot(sim,labels)
   m<-bplot(sim,labels)
-  if (color_scheme==1){
-  pal<-colorRampPalette(c('white','Blue'))(200)}
-  else if(color_scheme==2){
-    pal<-colorRampPalette(c('white','Red'))(200)}
-  else if(color_scheme==3){
-    pal<-colorRampPalette(c('white','Green'))(200)
-  }
+  pal<-colorRampPalette(c(color_scheme_low,color_scheme_high))(200)
   return(heatmap(as.matrix(m),Rowv = NA, Colv = NA, scale = "none",
                  main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = "",col=pal))
 }
 
 #=====Function for plotting log of individual biomes===================
-biome_log_plot<-function(data,k,metric,color_scheme){
+biome_log_plot<-function(data,k,metric,color_scheme_low,color_scheme_high){
   dsim=vegdist(data,method=metric,diag=TRUE,upper=TRUE)
   sim=(as.matrix(dsim)-1)*-1
   sim[is.nan(sim)]=1
@@ -43,13 +37,7 @@ biome_log_plot<-function(data,k,metric,color_scheme){
   #bplot(sim,labels)
   sim<-log(sim)
   m<-bplot(sim,labels)
-  if (color_scheme==1){
-    pal<-colorRampPalette(c('white','Blue'))(200)}
-  else if(color_scheme==2){
-    pal<-colorRampPalette(c('white','Red'))(200)}
-  else if(color_scheme==3){
-    pal<-colorRampPalette(c('white','Green'))(200)
-  }
+  pal<-colorRampPalette(c(color_scheme_low,color_scheme_high))(200)
   return(heatmap(as.matrix(m),Rowv = NA, Colv = NA, scale = "none",
                  main = "Spectral clustering",xlab = "Sample ID",ylab = "Sample ID",labRow = "",labCol = "",col=pal))
 }

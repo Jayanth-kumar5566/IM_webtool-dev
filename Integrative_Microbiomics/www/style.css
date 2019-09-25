@@ -8,3 +8,24 @@ h3{font-weight: bold;
 font-family: sans-serif;
 color: black;
 }
+
+.navbar-default {
+    font-size: 15px; /* Increases font size of navbar except title */
+}
+
+.navbar-brand{
+  font-size: 25px;
+  font-family: sans-serif;
+  font-weight: 300;
+}
+
+p.intro_p{
+  font-size: 20px;
+}
+
+li{
+  font-size: 15px;
+  font-weight: 100;
+  font-family: sans-serif;
+  line-height: 2;
+}
